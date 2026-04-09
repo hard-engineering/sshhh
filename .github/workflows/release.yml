@@ -41,26 +41,8 @@ jobs:
           git clone https://x-access-token:${TAP_TOKEN}@github.com/hard-engineering/homebrew-sshhh.git tap
           cd tap
 
-          cat > Casks/sshhh.rb <<CASK
-cask "sshhh" do
-  version "${VERSION}"
-  sha256 "${SHA256}"
-
-  url "${URL}"
-  name "sshhh"
-  desc "System-wide push-to-talk speech-to-text for macOS"
-  homepage "https://github.com/hard-engineering/sshhh"
-
-  depends_on macos: ">= :sonoma"
-  depends_on arch: :arm64
-
-  app "sshhh.app"
-
-  zap trash: [
-    "~/Library/Preferences/com.sshhh.app.plist",
-  ]
-end
-CASK
+          sed -i '' "s/version \".*\"/version \"${VERSION}\"/" Casks/sshhh.rb
+          sed -i '' "s/sha256 \".*\"/sha256 \"${SHA256}\"/" Casks/sshhh.rb
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
