@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 import PackageDescription
 
 let package = Package(
@@ -10,7 +10,7 @@ let package = Package(
         .executable(name: "sshhh", targets: ["sshhh"])
     ],
     dependencies: [
-        .package(url: "https://github.com/FluidInference/FluidAudio.git", revision: "5d9176eb35bcbe009c7b26202f0e92c85ff2dedf")
+        .package(url: "https://github.com/FluidInference/FluidAudio.git", exact: "0.13.6")
     ],
     targets: [
         .executableTarget(
@@ -33,5 +33,6 @@ let package = Package(
             dependencies: [],
             path: "IntegrationTests"
         )
-    ]
+    ],
+    swiftLanguageModes: [.v5]
 )

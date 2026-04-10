@@ -1,12 +1,14 @@
 import Cocoa
 import SwiftUI
-import Combine
+import AVFoundation
 import FluidAudio
 
 private let diagLog: FileHandle = {
     let path = "/tmp/sshhh_diag.log"
-    FileManager.default.createFile(atPath: path, contents: nil)
-    return FileHandle(forWritingAtPath: path)!
+    FileManager.default.createFile(atPath: path, contents: Data())
+    let handle = FileHandle(forWritingAtPath: path)!
+    handle.truncateFile(atOffset: 0)
+    return handle
 }()
 
 func diag(_ msg: String) {
@@ -25,9 +27,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var transcriptionEngine: TranscriptionEngine?
     private var textInserter: TextInserter?
     private var mainWindowController: MainWindowController?
+    private var activeSession: SlidingWindowAsrManager?
+    private var sessionReady: CheckedContinuation<SlidingWindowAsrManager?, Never>?
+    private var bufferStreamContinuation: AsyncStream<AVAudioPCMBuffer>.Continuation?
+    private var bufferFeederTask: Task<Void, Never>?
     let transcriptionStore = TranscriptionStore()
     let dictionaryStore = DictionaryStore()
-    private var dictionaryCancellable: AnyCancellable?
 
     private var isRecording = false
     private var isProcessing = false
@@ -80,49 +85,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         print("🚀 Starting services...")
         hotkeyManager?.start()
 
-        dictionaryCancellable = dictionaryStore.$entries
-            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
-            .sink { [weak self] _ in
-                Task { [weak self] in
-                    await self?.configureVocabularyBoosting()
-                }
-            }
-
         Task {
             await initializeTranscriptionEngine()
         }
     }
-    
+
     private func initializeTranscriptionEngine() async {
+        diag("initializeTranscriptionEngine started")
         menubarController?.setState(.loading)
 
         do {
             transcriptionEngine = TranscriptionEngine()
             try await transcriptionEngine?.initialize()
-            await configureVocabularyBoosting()
 
             await MainActor.run {
                 menubarController?.setState(.idle)
-                print("✅ Transcription engine ready")
+                diag("Transcription engine ready, isReady=\(self.transcriptionEngine?.isReady ?? false)")
             }
         } catch {
+            diag("Transcription engine FAILED: \(error)")
             await MainActor.run {
                 menubarController?.setState(.error)
                 print("❌ Failed to initialize transcription engine: \(error)")
             }
         }
-    }
-
-    private func configureVocabularyBoosting() async {
-        let terms = dictionaryStore.buildVocabularyTerms()
-        diag("configureVocabularyBoosting called with \(terms.count) term(s)")
-        for (i, term) in terms.enumerated() {
-            diag("  term[\(i)]: text=\"\(term.text)\" weight=\(term.weight ?? 0) aliases=\(term.aliases ?? [])")
-        }
-        if transcriptionEngine == nil {
-            diag("  WARNING: transcriptionEngine is nil — vocabulary will NOT be configured")
-        }
-        await transcriptionEngine?.configureVocabulary(terms: terms)
     }
     
     private var permissionTimer: Timer?
@@ -165,34 +151,86 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             print("⚠️ Cannot start: already recording/processing")
             return
         }
-        
+
         // Cooldown check (prevent accidental re-triggering)
         if Date().timeIntervalSince(lastProcessingTime) < 1.0 {
             print("⏳ Cooldown active, ignoring trigger")
             return
         }
-        
+
         guard transcriptionEngine?.isReady == true else {
             print("⚠️ Transcription engine not ready")
             return
         }
-        
+
         print("🎤 Starting recording sequence...")
         diag("STATE: recording=true")
         isRecording = true
-        
+
         DispatchQueue.main.async { [weak self] in
             self?.menubarController?.setState(.recording)
             self?.floatingWidget?.show(state: .recording)
             self?.playSound(.startRecording)
         }
-        
+
+        // Start mic capture immediately — audio is buffered internally
+        // until the streaming session is ready (fixes lost audio bug)
         audioRecorder?.startRecording()
+
+        // Set up ordered buffer stream (fixes ordering + tail audio bugs)
+        let (bufferStream, continuation) = AsyncStream<AVAudioPCMBuffer>.makeStream()
+        bufferStreamContinuation = continuation
+
+        // Wire recorder to push into the ordered stream
+        audioRecorder?.onBuffer = { [weak self] buffer in
+            self?.bufferStreamContinuation?.yield(buffer)
+        }
+
+        // Create session in background, then flush early audio and start feeding
+        Task {
+            do {
+                let terms = dictionaryStore.buildVocabularyTerms()
+                let session = try await transcriptionEngine?.createSession(terms: terms)
+                activeSession = session
+
+                // Signal that session is ready (for stopRecordingAndTranscribe to await)
+                sessionReady?.resume(returning: session)
+                sessionReady = nil
+
+                guard let session = session else { return }
+
+                // Flush audio captured while session was being created
+                if let recorder = audioRecorder {
+                    for buffer in recorder.flushPendingBuffers() {
+                        await session.streamAudio(buffer)
+                    }
+                }
+
+                // Single feeder task: reads from ordered stream, calls streamAudio sequentially
+                bufferFeederTask = Task {
+                    for await buffer in bufferStream {
+                        await session.streamAudio(buffer)
+                    }
+                }
+            } catch {
+                print("❌ Failed to start streaming session: \(error)")
+                sessionReady?.resume(returning: nil)
+                sessionReady = nil
+                audioRecorder?.stopRecording()
+                bufferStreamContinuation?.finish()
+                bufferStreamContinuation = nil
+                await MainActor.run {
+                    isRecording = false
+                    isProcessing = false
+                    finishProcessing(text: nil)
+                }
+            }
+        }
     }
-    
+
     private func stopRecordingAndTranscribe() {
         guard isRecording else { return }
-        
+
         isRecording = false
         isProcessing = true
         diag("STATE: recording=false, processing=true")
@@ -203,22 +241,44 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.floatingWidget?.show(state: .processing)
             self.playSound(.stopRecording)
         }
-        
-        // Get recorded audio
-        guard let samples = audioRecorder?.stopRecording() else {
-            finishProcessing(text: nil)
-            return
-        }
-        
-        // Transcribe
+
+        // Stop mic capture
+        audioRecorder?.stopRecording()
+
+        // Close the buffer stream so the feeder task can drain and finish
+        bufferStreamContinuation?.finish()
+        bufferStreamContinuation = nil
+
         Task {
             do {
-                let text = try await transcriptionEngine?.transcribe(samples: samples)
+                // If session is still being created, wait for it
+                let session: SlidingWindowAsrManager?
+                if let active = activeSession {
+                    session = active
+                } else {
+                    session = await withCheckedContinuation { cont in
+                        sessionReady = cont
+                    }
+                    activeSession = session
+                }
+
+                // Wait for all buffered audio to be fed to the session
+                await bufferFeederTask?.value
+                bufferFeederTask = nil
+
+                let text = try await session?.finish()
+                let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines)
+                activeSession = nil
+
                 await MainActor.run {
-                    finishProcessing(text: text)
+                    finishProcessing(text: (trimmed?.isEmpty == false) ? trimmed : nil)
                 }
             } catch {
                 print("❌ Transcription error: \(error)")
+                bufferFeederTask?.cancel()
+                bufferFeederTask = nil
+                activeSession = nil
+
                 await MainActor.run {
                     finishProcessing(text: nil)
                 }

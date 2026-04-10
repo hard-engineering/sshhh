@@ -6,7 +6,7 @@ class TestableRecordingController {
 
     // MARK: - Dependencies (injectable)
 
-    private let audioRecorder: AudioRecording
+    private var audioRecorder: AudioRecording
     private let transcriber: Transcribing
     private let textInserter: TextInserting
     private let widget: WidgetDisplaying
@@ -27,6 +27,10 @@ class TestableRecordingController {
 
     private var activationWorkItem: DispatchWorkItem?
     private var recordingActivated = false
+
+    /// Closure that performs transcription for the current session.
+    /// Injected by tests to simulate streaming transcription without FluidAudio.
+    var transcriptionProvider: (() async throws -> String?)?
 
     // MARK: - Callbacks for testing
 
@@ -119,27 +123,17 @@ class TestableRecordingController {
         isProcessing = true
         notifyStateChange()
 
-        // CRITICAL: Capture isProcessing state for the async block
-        // This prevents the race condition where the async block
-        // shows the widget after finishProcessing has already hidden it
         DispatchQueue.main.async { [weak self] in
             guard let self = self, self.isProcessing else { return }
             self.widget.show(state: .processing)
         }
 
-        // Get recorded audio
-        guard let samples = audioRecorder.stopRecording() else {
-            print("⚠️ [Controller] No audio samples (empty buffer)")
-            finishProcessing(text: nil)
-            return
-        }
+        audioRecorder.stopRecording()
 
-        print("🔄 [Controller] Transcribing \(samples.count) samples")
-
-        // Transcribe
+        // Get transcription from the session
         Task {
             do {
-                let text = try await transcriber.transcribe(samples: samples)
+                let text = try await transcriptionProvider?()
                 await MainActor.run {
                     self.finishProcessing(text: text)
                 }

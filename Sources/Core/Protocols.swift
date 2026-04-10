@@ -1,17 +1,19 @@
 import Foundation
+import AVFoundation
 
 // MARK: - Protocols for testability
 
 /// Protocol for audio recording functionality
 protocol AudioRecording {
+    var onBuffer: ((AVFoundation.AVAudioPCMBuffer) -> Void)? { get set }
     func startRecording()
-    func stopRecording() -> [Float]?
+    func stopRecording()
+    func flushPendingBuffers() -> [AVAudioPCMBuffer]
 }
 
 /// Protocol for transcription functionality
 protocol Transcribing {
     var isReady: Bool { get }
-    func transcribe(samples: [Float]) async throws -> String?
 }
 
 /// Protocol for text insertion functionality

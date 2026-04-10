@@ -55,7 +55,7 @@ struct DictionaryView: View {
                     } else {
                         LazyVStack(alignment: .leading, spacing: 0) {
                             ForEach(store.entries) { entry in
-                                DictionaryRowView(entry: entry)
+                                DictionaryRowView(entry: entry, onDelete: { store.deleteEntry(entry) })
                                     .contextMenu {
                                         Button(role: .destructive) {
                                             store.deleteEntry(entry)
@@ -80,6 +80,8 @@ struct DictionaryView: View {
 
 struct DictionaryRowView: View {
     let entry: DictionaryEntry
+    var onDelete: () -> Void
+    @State private var isHovered = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -94,7 +96,16 @@ struct DictionaryRowView: View {
 
             Spacer()
 
-            if let spoken = entry.spokenForm, entry.hasReplacement {
+            if isHovered {
+                Button(role: .destructive) {
+                    onDelete()
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            } else if let spoken = entry.spokenForm, entry.hasReplacement {
                 Text(spoken)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -103,6 +114,9 @@ struct DictionaryRowView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 8)
         .contentShape(Rectangle())
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 }
 

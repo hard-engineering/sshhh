@@ -3,20 +3,25 @@ import Accelerate
 
 /// Records audio from microphone at 16kHz mono (required by FluidAudio)
 class AudioRecorder: AudioRecording {
-    
+
     private let audioEngine = AVAudioEngine()
-    private var audioBuffer: [Float] = []
-    private let bufferLock = NSLock()
-    
+
     private let targetSampleRate: Double = 16000
     private var converter: AVAudioConverter?
-    
+
     private var isRecording = false
-    
+
+    /// Called with each resampled 16kHz mono buffer during recording
+    var onBuffer: ((AVAudioPCMBuffer) -> Void)?
+
+    /// Internal buffer for audio captured before a streaming session is ready
+    private var pendingBuffers: [AVAudioPCMBuffer] = []
+    private let bufferLock = NSLock()
+
     init() {
         setupAudioSession()
     }
-    
+
     private func setupAudioSession() {
         // Request microphone permission
         AVCaptureDevice.requestAccess(for: .audio) { granted in
@@ -27,17 +32,17 @@ class AudioRecorder: AudioRecording {
             }
         }
     }
-    
+
     func startRecording() {
         guard !isRecording else { return }
-        
+
         bufferLock.lock()
-        audioBuffer.removeAll()
+        pendingBuffers.removeAll()
         bufferLock.unlock()
-        
+
         let inputNode = audioEngine.inputNode
         let inputFormat = inputNode.outputFormat(forBus: 0)
-        
+
         // Create output format (16kHz mono)
         guard let outputFormat = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,
@@ -48,15 +53,15 @@ class AudioRecorder: AudioRecording {
             print("❌ Failed to create output format")
             return
         }
-        
+
         // Create converter
         converter = AVAudioConverter(from: inputFormat, to: outputFormat)
-        
+
         // Install tap on input node
         inputNode.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] buffer, time in
             self?.processAudioBuffer(buffer, outputFormat: outputFormat)
         }
-        
+
         do {
             try audioEngine.start()
             isRecording = true
@@ -65,58 +70,57 @@ class AudioRecorder: AudioRecording {
             print("❌ Failed to start audio engine: \(error)")
         }
     }
-    
-    func stopRecording() -> [Float]? {
-        guard isRecording else { return nil }
-        
+
+    func stopRecording() {
+        guard isRecording else { return }
+
         audioEngine.inputNode.removeTap(onBus: 0)
         audioEngine.stop()
         isRecording = false
-        
-        bufferLock.lock()
-        let samples = audioBuffer
-        bufferLock.unlock()
-        
-        print("🎤 Recording stopped, \(samples.count) samples (\(String(format: "%.2f", Double(samples.count) / targetSampleRate))s)")
-        
-        return samples.isEmpty ? nil : samples
+        onBuffer = nil
+
+        print("🎤 Recording stopped")
     }
-    
+
+    /// Returns and clears any audio buffers captured before onBuffer was set
+    func flushPendingBuffers() -> [AVAudioPCMBuffer] {
+        bufferLock.lock()
+        let buffers = pendingBuffers
+        pendingBuffers.removeAll()
+        bufferLock.unlock()
+        return buffers
+    }
+
     private func processAudioBuffer(_ buffer: AVAudioPCMBuffer, outputFormat: AVAudioFormat) {
         guard let converter = converter else { return }
-        
+
         // Calculate output buffer size
         let ratio = outputFormat.sampleRate / buffer.format.sampleRate
         let outputFrameCapacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio)
-        
+
         guard let outputBuffer = AVAudioPCMBuffer(
             pcmFormat: outputFormat,
             frameCapacity: outputFrameCapacity
         ) else { return }
-        
+
         var error: NSError?
         let status = converter.convert(to: outputBuffer, error: &error) { inNumPackets, outStatus in
             outStatus.pointee = .haveData
             return buffer
         }
-        
+
         guard status != .error, error == nil else {
             print("❌ Conversion error: \(error?.localizedDescription ?? "unknown")")
             return
         }
-        
-        // Extract float samples
-        guard let channelData = outputBuffer.floatChannelData?[0] else { return }
-        let frameLength = Int(outputBuffer.frameLength)
-        
-        var samples = [Float](repeating: 0, count: frameLength)
-        for i in 0..<frameLength {
-            samples[i] = channelData[i]
+
+        if let callback = onBuffer {
+            callback(outputBuffer)
+        } else {
+            // Buffer audio until streaming session is ready
+            bufferLock.lock()
+            pendingBuffers.append(outputBuffer)
+            bufferLock.unlock()
         }
-        
-        // Append to buffer
-        bufferLock.lock()
-        audioBuffer.append(contentsOf: samples)
-        bufferLock.unlock()
     }
 }

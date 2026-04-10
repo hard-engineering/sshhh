@@ -16,9 +16,6 @@ struct MainContentView: View {
                 HistoryView(store: store)
             case .dictionary:
                 DictionaryView(store: dictionaryStore)
-            default:
-                Text(selection?.rawValue ?? "")
-                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -29,9 +26,6 @@ struct MainContentView: View {
 enum SidebarItem: String, CaseIterable, Identifiable {
     case home = "Home"
     case dictionary = "Dictionary"
-    case snippets = "Snippets"
-    case style = "Style"
-    case notes = "Notes"
 
     var id: Self { self }
 
@@ -39,9 +33,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         switch self {
         case .home: return "house"
         case .dictionary: return "book"
-        case .snippets: return "text.snippet"
-        case .style: return "paintbrush"
-        case .notes: return "note.text"
         }
     }
 }
