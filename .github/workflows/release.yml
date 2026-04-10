@@ -38,7 +38,7 @@ jobs:
           SHA256="${{ steps.sha.outputs.sha256 }}"
           URL="https://github.com/hard-engineering/sshhh/releases/download/${{ github.ref_name }}/sshhh.dmg"
 
-          git clone https://x-access-token:${TAP_TOKEN}@github.com/hard-engineering/homebrew-sshhh.git tap
+          git clone https://x-access-token:${TAP_TOKEN}@github.com/hard-engineering/homebrew-tap.git tap
           cd tap
 
           sed -i '' "s/version \".*\"/version \"${VERSION}\"/" Casks/sshhh.rb
