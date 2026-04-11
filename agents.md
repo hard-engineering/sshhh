@@ -4,11 +4,12 @@ Native macOS menubar app for system-wide push-to-talk speech-to-text. Holds Opti
 
 ## Build
 
-Always create a new DMG when building the app:
+**Always** build the app after making code changes — the user runs `sshhh.app` directly:
 ```bash
-bash bundler.sh
+CODESIGN_IDENTITY="sshhh Dev" bash bundler.sh
 ```
-Produces `sshhh.app` and `sshhh.dmg` (ad-hoc signed).
+- **Must sign with certificate** — use `CODESIGN_IDENTITY="sshhh Dev"`. Ad-hoc signing (`-`) resets macOS permissions (accessibility, mic) on every rebuild.
+- Produces `sshhh.app` (the DMG is also created but not needed for local dev).
 
 ## Tests
 
