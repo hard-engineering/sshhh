@@ -18,6 +18,12 @@ class AudioRecorder: AudioRecording {
     private var pendingBuffers: [AVAudioPCMBuffer] = []
     private let bufferLock = NSLock()
 
+    /// Peak RMS across all buffers in the current recording (0.0 = silence, 1.0 = max)
+    private(set) var peakRMS: Float = 0.0
+
+    /// Minimum RMS to consider the recording as containing speech
+    static let silenceThreshold: Float = 0.04
+
     init() {}
 
     func startRecording() {
@@ -26,6 +32,7 @@ class AudioRecorder: AudioRecording {
         bufferLock.lock()
         pendingBuffers.removeAll()
         bufferLock.unlock()
+        peakRMS = 0.0
 
         let inputNode = audioEngine.inputNode
         let inputFormat = inputNode.outputFormat(forBus: 0)
@@ -99,6 +106,19 @@ class AudioRecorder: AudioRecording {
         guard status != .error, error == nil else {
             print("❌ Conversion error: \(error?.localizedDescription ?? "unknown")")
             return
+        }
+
+        // Track peak RMS for silence detection
+        if let channelData = outputBuffer.floatChannelData?[0] {
+            let frameCount = Int(outputBuffer.frameLength)
+            if frameCount > 0 {
+                var sumSquares: Float = 0
+                vDSP_measqv(channelData, 1, &sumSquares, vDSP_Length(frameCount))
+                let rms = sqrtf(sumSquares)
+                if rms > peakRMS {
+                    peakRMS = rms
+                }
+            }
         }
 
         if let callback = onBuffer {

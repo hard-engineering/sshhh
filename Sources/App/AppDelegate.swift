@@ -240,8 +240,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.playSound(.stopRecording)
         }
 
-        // Stop mic capture
+        // Stop mic capture and check audio level
+        let peakRMS = audioRecorder?.peakRMS ?? 0
         audioRecorder?.stopRecording()
+        diag("Audio peakRMS: \(peakRMS), threshold: \(AudioRecorder.silenceThreshold)")
+
+        // Skip transcription entirely if audio was silent
+        if peakRMS < AudioRecorder.silenceThreshold {
+            diag("Silent recording detected, skipping transcription")
+            bufferStreamContinuation?.finish()
+            bufferStreamContinuation = nil
+            bufferFeederTask?.cancel()
+            bufferFeederTask = nil
+            activeSession = nil
+            finishProcessing(text: nil)
+            return
+        }
 
         // Close the buffer stream so the feeder task can drain and finish
         bufferStreamContinuation?.finish()
