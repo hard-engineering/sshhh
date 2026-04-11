@@ -18,20 +18,7 @@ class AudioRecorder: AudioRecording {
     private var pendingBuffers: [AVAudioPCMBuffer] = []
     private let bufferLock = NSLock()
 
-    init() {
-        setupAudioSession()
-    }
-
-    private func setupAudioSession() {
-        // Request microphone permission
-        AVCaptureDevice.requestAccess(for: .audio) { granted in
-            if granted {
-                print("✅ Microphone access granted")
-            } else {
-                print("❌ Microphone access denied")
-            }
-        }
-    }
+    init() {}
 
     func startRecording() {
         guard !isRecording else { return }

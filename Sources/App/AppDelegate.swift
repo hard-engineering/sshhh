@@ -27,6 +27,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var transcriptionEngine: TranscriptionEngine?
     private var textInserter: TextInserter?
     private var mainWindowController: MainWindowController?
+    private var permissionsWindowController: PermissionsWindowController?
     private var activeSession: SlidingWindowAsrManager?
     private var sessionReady: CheckedContinuation<SlidingWindowAsrManager?, Never>?
     private var bufferStreamContinuation: AsyncStream<AVAudioPCMBuffer>.Continuation?
@@ -41,12 +42,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide dock icon (menubar-only app)
         NSApp.setActivationPolicy(.accessory)
-        
+
         // Initialize UI components (Menubar, Widget)
         setupComponents()
-        
+
         // Check permissions and start services if granted
-        checkAccessibilityPermissions()
+        checkPermissions()
     }
     
     func applicationWillTerminate(_ notification: Notification) {
@@ -66,7 +67,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Menubar
         menubarController = MenubarController(
-            onShowHistory: { [weak self] in self?.showMainWindow() },
+            onOpenApp: { [weak self] in self?.showMainWindow() },
+            onShowHistory: { [weak self] in self?.showMainWindow(tab: .history) },
             onQuit: { NSApp.terminate(nil) }
         )
         
@@ -111,36 +113,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
-    private var permissionTimer: Timer?
-    
-    private func checkAccessibilityPermissions() {
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
-        let accessEnabled = AXIsProcessTrustedWithOptions(options as CFDictionary)
-        
-        if accessEnabled {
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+
+    private func checkPermissions() {
+        let axOptions = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: false]
+        let axGranted = AXIsProcessTrustedWithOptions(axOptions as CFDictionary)
+        let micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+
+        if axGranted && micGranted && hasCompletedOnboarding {
             startServices()
         } else {
-            print("⏳ Accessibility access not granted. Waiting for user input via System Prompt...")
-            // Don't show custom alert immediately as it conflicts with System Alert.
-            // Just start polling.
-            startPollingPermissions()
+            showPermissionsWindow()
         }
     }
-    
-    private func startPollingPermissions() {
-        print("⏳ Polling for permissions (silently)...")
-        permissionTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
-            // Use false for prompt here! Otherwise it keeps re-triggering or insisting on the dialog.
-            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: false]
-            let accessEnabled = AXIsProcessTrustedWithOptions(options as CFDictionary)
-            
-            if accessEnabled {
-                print("✅ Permissions granted! Starting services.")
-                timer.invalidate()
-                self?.permissionTimer = nil
-                self?.startServices()
-            }
+
+    private func showPermissionsWindow() {
+        permissionsWindowController = PermissionsWindowController()
+        permissionsWindowController?.onAllGranted = { [weak self] in
+            self?.hasCompletedOnboarding = true
+            self?.permissionsWindowController?.window?.close()
+            self?.permissionsWindowController = nil
+            self?.startServices()
+            self?.showMainWindow()
         }
+        permissionsWindowController?.showWindow(nil)
     }
     
     // MARK: - Recording Flow
@@ -323,12 +319,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     // MARK: - Main Window
 
-    private func showMainWindow() {
+    private func showMainWindow(tab: SidebarItem? = nil) {
         if mainWindowController == nil {
             mainWindowController = MainWindowController(
                 transcriptionStore: transcriptionStore,
                 dictionaryStore: dictionaryStore
             )
+        }
+        if let tab = tab {
+            mainWindowController?.navigationState.selection = tab
         }
         mainWindowController?.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)

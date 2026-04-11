@@ -1,22 +1,34 @@
 import SwiftUI
 
+// MARK: - Navigation State
+
+class NavigationState: ObservableObject {
+    @Published var selection: SidebarItem? = .home
+}
+
 // MARK: - Root View
 
 struct MainContentView: View {
     @ObservedObject var store: TranscriptionStore
     @ObservedObject var dictionaryStore: DictionaryStore
-    @State private var selection: SidebarItem? = .home
+    @ObservedObject var navigationState: NavigationState
 
     var body: some View {
-        NavigationSplitView {
-            SidebarView(selection: $selection)
-        } detail: {
-            switch selection {
-            case .home, .none:
-                HistoryView(store: store)
-            case .dictionary:
-                DictionaryView(store: dictionaryStore)
+        HStack(spacing: 0) {
+            SidebarView(selection: $navigationState.selection)
+                .frame(width: 180)
+            Divider()
+            Group {
+                switch navigationState.selection {
+                case .home, .none:
+                    HomeView(store: store)
+                case .history:
+                    HistoryView(store: store)
+                case .dictionary:
+                    DictionaryView(store: dictionaryStore)
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }
@@ -25,6 +37,7 @@ struct MainContentView: View {
 
 enum SidebarItem: String, CaseIterable, Identifiable {
     case home = "Home"
+    case history = "History"
     case dictionary = "Dictionary"
 
     var id: Self { self }
@@ -32,6 +45,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .home: return "house"
+        case .history: return "clock.arrow.trianglehead.counterclockwise.rotate.90"
         case .dictionary: return "book"
         }
     }
@@ -46,7 +60,224 @@ struct SidebarView: View {
                 .tag(item)
         }
         .listStyle(.sidebar)
-        .navigationSplitViewColumnWidth(min: 160, ideal: 180)
+    }
+}
+
+// MARK: - Home View
+
+struct HomeView: View {
+    @ObservedObject var store: TranscriptionStore
+    @State private var tryItText = ""
+    @FocusState private var tryItFocused: Bool
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                // Header
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("sshhh")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                    Text("Push-to-talk dictation, entirely on-device")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+                .padding(.bottom, 20)
+
+                // Stats Grid
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12),
+                ], spacing: 12) {
+                    StatCard(
+                        title: "Dictations",
+                        value: "\(dictationCount)",
+                        icon: "mic.fill",
+                        tint: .red
+                    )
+                    StatCard(
+                        title: "Words",
+                        value: formattedWordCount,
+                        icon: "text.word.spacing",
+                        tint: .blue
+                    )
+                    StatCard(
+                        title: "Avg. Length",
+                        value: avgWords,
+                        icon: "ruler",
+                        tint: .orange
+                    )
+                }
+                .padding(.horizontal, 24)
+
+                // Try it here
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Try it here")
+                        .font(.headline)
+                    Text("Hold Option (\u{2325}) and speak.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    TextEditor(text: $tryItText)
+                        .font(.body)
+                        .focused($tryItFocused)
+                        .scrollContentBackground(.hidden)
+                        .padding(8)
+                        .frame(minHeight: 80)
+                        .background(Color(nsColor: .controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+                        )
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
+                .onAppear { tryItFocused = true }
+
+                // How to Use
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("How to Use")
+                        .font(.headline)
+
+                    HowToStep(
+                        number: 1,
+                        title: "Hold Option (\u{2325})",
+                        description: "Press and hold the Option key anywhere on your Mac to start recording."
+                    )
+                    HowToStep(
+                        number: 2,
+                        title: "Speak",
+                        description: "Dictate naturally — a floating indicator confirms you're being heard."
+                    )
+                    HowToStep(
+                        number: 3,
+                        title: "Release to Transcribe",
+                        description: "Let go of Option. Your speech is transcribed and pasted at the cursor."
+                    )
+                }
+                .padding(16)
+                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
+
+                // Tips
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Tips")
+                        .font(.headline)
+
+                    TipRow(icon: "book.fill", text: "Add custom words in Dictionary to improve accuracy for names and jargon.")
+                    TipRow(icon: "arrow.triangle.swap", text: "Dictionary entries with a spoken form auto-replace — say one thing, type another.")
+                    TipRow(icon: "lock.shield.fill", text: "Everything runs locally on Apple Neural Engine. No audio leaves your device.")
+                }
+                .padding(16)
+                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal, 24)
+                .padding(.top, 12)
+                .padding(.bottom, 24)
+            }
+        }
+    }
+
+    // MARK: - Computed Stats
+
+    private var nonSilentEntries: [TranscriptionEntry] {
+        store.entries.filter { !$0.isSilent && !$0.text.isEmpty }
+    }
+
+    private var dictationCount: Int {
+        nonSilentEntries.count
+    }
+
+    private var totalWords: Int {
+        nonSilentEntries.reduce(0) { $0 + $1.text.split(separator: " ").count }
+    }
+
+    private var formattedWordCount: String {
+        if totalWords >= 1000 {
+            let k = Double(totalWords) / 1000.0
+            return String(format: "%.1fk", k)
+        }
+        return "\(totalWords)"
+    }
+
+    private var avgWords: String {
+        guard dictationCount > 0 else { return "—" }
+        let avg = Double(totalWords) / Double(dictationCount)
+        return String(format: "%.0f words", avg)
+    }
+}
+
+// MARK: - Home Subviews
+
+struct StatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(tint)
+
+            Text(value)
+                .font(.system(size: 26, weight: .bold, design: .rounded))
+                .monospacedDigit()
+
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+struct HowToStep: View {
+    let number: Int
+    let title: String
+    let description: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text("\(number)")
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .frame(width: 24, height: 24)
+                .background(Circle().fill(.primary.opacity(0.7)))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
+struct TipRow: View {
+    let icon: String
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 16)
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 

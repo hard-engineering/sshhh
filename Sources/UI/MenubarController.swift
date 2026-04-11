@@ -13,10 +13,12 @@ class MenubarController {
     }
     
     private var statusItem: NSStatusItem?
+    private let onOpenApp: () -> Void
     private let onShowHistory: () -> Void
     private let onQuit: () -> Void
 
-    init(onShowHistory: @escaping () -> Void, onQuit: @escaping () -> Void) {
+    init(onOpenApp: @escaping () -> Void, onShowHistory: @escaping () -> Void, onQuit: @escaping () -> Void) {
+        self.onOpenApp = onOpenApp
         self.onShowHistory = onShowHistory
         self.onQuit = onQuit
         setupStatusItem()
@@ -48,6 +50,10 @@ class MenubarController {
         menu.addItem(statusMenuItem)
         
         menu.addItem(NSMenuItem.separator())
+
+        let historyItem = NSMenuItem(title: "History", action: #selector(showHistory), keyEquivalent: "h")
+        historyItem.target = self
+        menu.addItem(historyItem)
 
         let openItem = NSMenuItem(title: "Open sshhh...", action: #selector(openMainWindow), keyEquivalent: ",")
         openItem.target = self
@@ -98,6 +104,10 @@ class MenubarController {
     }
     
     @objc private func openMainWindow() {
+        onOpenApp()
+    }
+
+    @objc private func showHistory() {
         onShowHistory()
     }
 
