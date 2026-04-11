@@ -74,12 +74,12 @@ struct SidebarView: View {
                     }
 
                     HStack(spacing: 4) {
-                        Text("brew upgrade sshhh")
+                        Text("brew update && brew upgrade sshhh")
                             .font(.system(.caption2, design: .monospaced))
                         Spacer()
                         Button {
                             NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString("brew upgrade sshhh", forType: .string)
+                            NSPasteboard.general.setString("brew update && brew upgrade sshhh", forType: .string)
                         } label: {
                             Image(systemName: "doc.on.doc")
                                 .font(.caption2)
@@ -100,7 +100,7 @@ struct SidebarView: View {
 
                     Button {
                         NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString("brew upgrade sshhh", forType: .string)
+                        NSPasteboard.general.setString("brew update && brew upgrade sshhh", forType: .string)
                         NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app"))
                     } label: {
                         HStack(spacing: 4) {
