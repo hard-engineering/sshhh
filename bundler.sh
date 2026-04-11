@@ -58,8 +58,13 @@ if [ -f "SpeakingIcon.png" ]; then
     cp "SpeakingIcon.png" "$RESOURCES_DIR/"
 fi
 
-echo "📝 Signing app (ad-hoc)..."
-codesign --force --deep --sign - "$APP_BUNDLE"
+SIGNING_IDENTITY="${CODESIGN_IDENTITY:--}"
+if [ "$SIGNING_IDENTITY" = "-" ]; then
+    echo "📝 Signing app (ad-hoc)..."
+else
+    echo "📝 Signing app with identity: $SIGNING_IDENTITY"
+fi
+codesign --force --deep --sign "$SIGNING_IDENTITY" "$APP_BUNDLE"
 
 echo "✅ $APP_NAME.app created successfully!"
 
