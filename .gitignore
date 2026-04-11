@@ -1,7 +1,6 @@
 .build/
 sshhh.app/
 sshhh.dmg
-sshhh.icns
 sshhh.iconset/
 *.xcodeproj/
 DerivedData/
