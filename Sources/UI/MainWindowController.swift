@@ -5,11 +5,13 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
 
     private let transcriptionStore: TranscriptionStore
     private let dictionaryStore: DictionaryStore
+    private let updateChecker: UpdateChecker
     let navigationState: NavigationState
 
-    init(transcriptionStore: TranscriptionStore, dictionaryStore: DictionaryStore) {
+    init(transcriptionStore: TranscriptionStore, dictionaryStore: DictionaryStore, updateChecker: UpdateChecker) {
         self.transcriptionStore = transcriptionStore
         self.dictionaryStore = dictionaryStore
+        self.updateChecker = updateChecker
         self.navigationState = NavigationState()
 
         let window = NSWindow(
@@ -34,7 +36,8 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
         let contentView = MainContentView(
             store: transcriptionStore,
             dictionaryStore: dictionaryStore,
-            navigationState: navigationState
+            navigationState: navigationState,
+            updateChecker: updateChecker
         )
         window.contentView = NSHostingView(rootView: contentView)
 

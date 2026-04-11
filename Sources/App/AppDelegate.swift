@@ -34,6 +34,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var bufferFeederTask: Task<Void, Never>?
     let transcriptionStore = TranscriptionStore()
     let dictionaryStore = DictionaryStore()
+    let updateChecker = UpdateChecker()
 
     private var isRecording = false
     private var isProcessing = false
@@ -86,6 +87,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func startServices() {
         print("🚀 Starting services...")
         hotkeyManager?.start()
+        updateChecker.checkOnce()
 
         Task {
             await initializeTranscriptionEngine()
@@ -323,7 +325,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if mainWindowController == nil {
             mainWindowController = MainWindowController(
                 transcriptionStore: transcriptionStore,
-                dictionaryStore: dictionaryStore
+                dictionaryStore: dictionaryStore,
+                updateChecker: updateChecker
             )
         }
         if let tab = tab {

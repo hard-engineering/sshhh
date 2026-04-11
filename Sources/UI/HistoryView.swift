@@ -12,10 +12,11 @@ struct MainContentView: View {
     @ObservedObject var store: TranscriptionStore
     @ObservedObject var dictionaryStore: DictionaryStore
     @ObservedObject var navigationState: NavigationState
+    @ObservedObject var updateChecker: UpdateChecker
 
     var body: some View {
         HStack(spacing: 0) {
-            SidebarView(selection: $navigationState.selection)
+            SidebarView(selection: $navigationState.selection, updateChecker: updateChecker)
                 .frame(width: 180)
             Divider()
             Group {
@@ -53,13 +54,99 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 
 struct SidebarView: View {
     @Binding var selection: SidebarItem?
+    @ObservedObject var updateChecker: UpdateChecker
 
     var body: some View {
-        List(SidebarItem.allCases, selection: $selection) { item in
-            Label(item.rawValue, systemImage: item.icon)
-                .tag(item)
+        VStack(spacing: 0) {
+            List(SidebarItem.allCases, selection: $selection) { item in
+                Label(item.rawValue, systemImage: item.icon)
+                    .tag(item)
+            }
+            .listStyle(.sidebar)
+
+            if let version = updateChecker.availableVersion {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .foregroundStyle(.blue)
+                        Text("v\(version) available")
+                            .fontWeight(.medium)
+                    }
+
+                    HStack(spacing: 4) {
+                        Text("brew upgrade sshhh")
+                            .font(.system(.caption2, design: .monospaced))
+                        Spacer()
+                        Button {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString("brew upgrade sshhh", forType: .string)
+                        } label: {
+                            Image(systemName: "doc.on.doc")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .onHover { inside in
+                            if inside { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 5))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+                    )
+
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString("brew upgrade sshhh", forType: .string)
+                        NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app"))
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("Open Terminal")
+                            Image(systemName: "arrow.up.right.square")
+                        }
+                        .font(.caption)
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+
+                    Text("Paste \u{2318}V in Terminal")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                .font(.caption)
+                .padding(10)
+                .background(Color(nsColor: .windowBackgroundColor).opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+                )
+                .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity)
+                .background(VisualEffectBackground(material: .sidebar))
+            }
         }
-        .listStyle(.sidebar)
+    }
+}
+
+struct VisualEffectBackground: NSViewRepresentable {
+    let material: NSVisualEffectView.Material
+
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = material
+        view.blendingMode = .behindWindow
+        view.state = .followsWindowActiveState
+        return view
+    }
+
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        nsView.material = material
     }
 }
 

@@ -2,6 +2,17 @@
 set -e
 
 APP_NAME="sshhh"
+
+# Version: CI passes VERSION env var (from git tag), local dev derives from git
+if [ -n "$VERSION" ]; then
+    APP_VERSION="${VERSION#v}"
+else
+    TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
+    TAG="${TAG#v}"
+    HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    APP_VERSION="${TAG}.${HASH}"
+fi
+
 BUILD_DIR=".build/release"
 APP_BUNDLE="$APP_NAME.app"
 CONTENTS_DIR="$APP_BUNDLE/Contents"
@@ -34,9 +45,9 @@ cat > "$CONTENTS_DIR/Info.plist" <<EOF
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>$APP_VERSION</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>$APP_VERSION</string>
     <key>LSUIElement</key>
     <true/> <!-- Run as agent (menubar app) -->
     <key>NSMicrophoneUsageDescription</key>

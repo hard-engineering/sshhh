@@ -34,7 +34,7 @@ jobs:
           rm "$RUNNER_TEMP/cert.p12"
 
       - name: Build and package
-        run: CODESIGN_IDENTITY="sshhh Dev" bash bundler.sh
+        run: VERSION="${{ github.ref_name }}" CODESIGN_IDENTITY="sshhh Dev" bash bundler.sh
 
       - name: Compute SHA256
         id: sha
