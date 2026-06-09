@@ -10,19 +10,38 @@ class AudioRecorder: AudioRecording {
     private var converter: AVAudioConverter?
 
     private var isRecording = false
+    private var onBufferCallback: ((AVAudioPCMBuffer) -> Void)?
+    private var _peakRMS: Float = 0.0
 
     /// Called with each resampled 16kHz mono buffer during recording
-    var onBuffer: ((AVAudioPCMBuffer) -> Void)?
+    var onBuffer: ((AVAudioPCMBuffer) -> Void)? {
+        get {
+            bufferLock.lock()
+            let callback = onBufferCallback
+            bufferLock.unlock()
+            return callback
+        }
+        set {
+            bufferLock.lock()
+            onBufferCallback = newValue
+            bufferLock.unlock()
+        }
+    }
 
     /// Internal buffer for audio captured before a streaming session is ready
     private var pendingBuffers: [AVAudioPCMBuffer] = []
     private let bufferLock = NSLock()
 
-    /// Timestamp when recording started
-    private(set) var recordingStartTime: Date?
+    /// Peak RMS across all buffers in the current recording (0.0 = silence, 1.0 = max)
+    var peakRMS: Float {
+        bufferLock.lock()
+        let value = _peakRMS
+        bufferLock.unlock()
+        return value
+    }
 
-    /// Minimum recording duration (seconds) to attempt transcription
-    static let minimumDuration: TimeInterval = 0.5
+    /// Minimum RMS to consider the recording as containing speech
+    static let silenceThreshold: Float = 0.04
 
     init() {}
 
@@ -31,8 +50,8 @@ class AudioRecorder: AudioRecording {
 
         bufferLock.lock()
         pendingBuffers.removeAll()
+        _peakRMS = 0.0
         bufferLock.unlock()
-        recordingStartTime = Date()
 
         let inputNode = audioEngine.inputNode
         let inputFormat = inputNode.outputFormat(forBus: 0)
@@ -108,13 +127,36 @@ class AudioRecorder: AudioRecording {
             return
         }
 
-        if let callback = onBuffer {
-            callback(outputBuffer)
-        } else {
+        var callback: ((AVAudioPCMBuffer) -> Void)?
+        bufferLock.lock()
+        updatePeakRMS(outputBuffer)
+        callback = onBufferCallback
+        if callback == nil {
             // Buffer audio until streaming session is ready
-            bufferLock.lock()
             pendingBuffers.append(outputBuffer)
-            bufferLock.unlock()
+        }
+        bufferLock.unlock()
+
+        if let callback = callback {
+            callback(outputBuffer)
+        }
+    }
+
+    private func updatePeakRMS(_ outputBuffer: AVAudioPCMBuffer) {
+        guard let channelData = outputBuffer.floatChannelData?[0] else {
+            return
+        }
+
+        let frameCount = Int(outputBuffer.frameLength)
+        guard frameCount > 0 else {
+            return
+        }
+
+        var sumSquares: Float = 0
+        vDSP_measqv(channelData, 1, &sumSquares, vDSP_Length(frameCount))
+        let rms = sqrtf(sumSquares)
+        if rms > _peakRMS {
+            _peakRMS = rms
         }
     }
 }

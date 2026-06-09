@@ -29,9 +29,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var mainWindowController: MainWindowController?
     private var permissionsWindowController: PermissionsWindowController?
     private var activeSession: SlidingWindowAsrManager?
-    private var sessionReady: CheckedContinuation<SlidingWindowAsrManager?, Never>?
+    private var sessionCreationTask: Task<SlidingWindowAsrManager?, Never>?
     private var bufferStreamContinuation: AsyncStream<AVAudioPCMBuffer>.Continuation?
     private var bufferFeederTask: Task<Void, Never>?
+    private var recordingGeneration = 0
     let transcriptionStore = TranscriptionStore()
     let dictionaryStore = DictionaryStore()
     let updateChecker = UpdateChecker()
@@ -164,6 +165,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         print("🎤 Starting recording sequence...")
         diag("STATE: recording=true")
         isRecording = true
+        recordingGeneration += 1
+        let generation = recordingGeneration
+        resetStreamingStateBeforeRecording()
 
         DispatchQueue.main.async { [weak self] in
             self?.menubarController?.setState(.recording)
@@ -185,50 +189,69 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // Create session in background, then flush early audio and start feeding
-        Task {
+        sessionCreationTask = Task { [weak self] in
+            guard let self = self else { return nil }
+
             do {
-                let terms = dictionaryStore.buildVocabularyTerms()
-                let session = try await transcriptionEngine?.createSession(terms: terms)
+                let terms = self.dictionaryStore.buildVocabularyTerms()
+                let session = try await self.transcriptionEngine?.createSession(terms: terms)
 
                 guard let session = session else {
-                    activeSession = nil
-                    sessionReady?.resume(returning: nil)
-                    sessionReady = nil
-                    return
+                    if self.recordingGeneration == generation {
+                        self.activeSession = nil
+                    }
+                    return nil
                 }
 
-                // Create feeder task BEFORE signalling ready — stopRecordingAndTranscribe
-                // reads bufferFeederTask after seeing activeSession/sessionReady, so
-                // the task must already be set to avoid a nil-await race.
-                bufferFeederTask = Task {
+                guard !Task.isCancelled,
+                      self.recordingGeneration == generation,
+                      self.isRecording || self.isProcessing else {
+                    _ = try? await session.finish()
+                    return nil
+                }
+
+                // Create feeder task before publishing activeSession, so stop can
+                // always await the feeder after observing a ready session.
+                self.bufferFeederTask = Task { [weak self] in
                     // First flush audio captured while session was being created
-                    if let recorder = audioRecorder {
+                    if let recorder = self?.audioRecorder {
                         for buffer in recorder.flushPendingBuffers() {
+                            guard !Task.isCancelled else { return }
                             await session.streamAudio(buffer)
                         }
                     }
                     // Then drain live audio from the ordered stream
                     for await buffer in bufferStream {
+                        guard !Task.isCancelled else { return }
                         await session.streamAudio(buffer)
                     }
                 }
 
                 // Now signal ready — stopRecordingAndTranscribe can safely await bufferFeederTask
-                activeSession = session
-                sessionReady?.resume(returning: session)
-                sessionReady = nil
+                self.activeSession = session
+                return session
             } catch {
-                print("❌ Failed to start streaming session: \(error)")
-                sessionReady?.resume(returning: nil)
-                sessionReady = nil
-                audioRecorder?.stopRecording()
-                bufferStreamContinuation?.finish()
-                bufferStreamContinuation = nil
-                await MainActor.run {
-                    isRecording = false
-                    isProcessing = false
-                    finishProcessing(text: nil)
+                guard !Task.isCancelled, self.recordingGeneration == generation else {
+                    return nil
                 }
+
+                print("❌ Failed to start streaming session: \(error)")
+                self.audioRecorder?.stopRecording()
+                self.bufferStreamContinuation?.finish()
+                self.bufferStreamContinuation = nil
+                self.bufferFeederTask?.cancel()
+                self.bufferFeederTask = nil
+                self.sessionCreationTask = nil
+                self.activeSession = nil
+
+                await MainActor.run {
+                    if self.isRecording {
+                        self.isRecording = false
+                        self.isProcessing = false
+                        self.finishProcessing(text: nil)
+                    }
+                }
+                return nil
             }
         }
     }
@@ -247,19 +270,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.playSound(.stopRecording)
         }
 
-        // Stop mic capture and check duration
-        let duration = -(audioRecorder?.recordingStartTime?.timeIntervalSinceNow ?? 0)
+        let generation = recordingGeneration
         audioRecorder?.stopRecording()
-        diag("Recording duration: \(String(format: "%.2f", duration))s, minimum: \(AudioRecorder.minimumDuration)s")
+        let peakRMS = audioRecorder?.peakRMS ?? 0
+        diag("Audio peakRMS: \(peakRMS), threshold: \(AudioRecorder.silenceThreshold)")
 
-        // Skip transcription if recording was too short to contain speech
-        if duration < AudioRecorder.minimumDuration {
-            diag("Recording too short, skipping transcription")
-            bufferStreamContinuation?.finish()
-            bufferStreamContinuation = nil
-            bufferFeederTask?.cancel()
-            bufferFeederTask = nil
-            activeSession = nil
+        // Skip transcription entirely if audio was silent.
+        if peakRMS < AudioRecorder.silenceThreshold {
+            diag("Silent recording detected, skipping transcription")
+            cancelStreamingSession(for: generation)
             finishProcessing(text: nil)
             return
         }
@@ -275,33 +294,82 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 if let active = activeSession {
                     session = active
                 } else {
-                    session = await withCheckedContinuation { cont in
-                        sessionReady = cont
-                    }
+                    session = await sessionCreationTask?.value
+                    guard recordingGeneration == generation else { return }
                     activeSession = session
+                }
+
+                guard let session = session else {
+                    sessionCreationTask = nil
+                    activeSession = nil
+                    await MainActor.run {
+                        finishProcessing(text: nil)
+                    }
+                    return
                 }
 
                 // Wait for all buffered audio to be fed to the session
                 await bufferFeederTask?.value
                 bufferFeederTask = nil
+                sessionCreationTask = nil
 
-                let text = try await session?.finish()
-                let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines)
+                let text = try await session.finish()
+                let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
                 activeSession = nil
 
                 await MainActor.run {
-                    finishProcessing(text: (trimmed?.isEmpty == false) ? trimmed : nil)
+                    finishProcessing(text: trimmed.isEmpty ? nil : trimmed)
                 }
             } catch {
+                guard recordingGeneration == generation else { return }
+
                 print("❌ Transcription error: \(error)")
                 bufferFeederTask?.cancel()
                 bufferFeederTask = nil
+                sessionCreationTask = nil
                 activeSession = nil
 
                 await MainActor.run {
                     finishProcessing(text: nil)
                 }
             }
+        }
+    }
+
+    private func resetStreamingStateBeforeRecording() {
+        sessionCreationTask?.cancel()
+        sessionCreationTask = nil
+        bufferStreamContinuation?.finish()
+        bufferStreamContinuation = nil
+        bufferFeederTask?.cancel()
+        bufferFeederTask = nil
+
+        if let staleSession = activeSession {
+            activeSession = nil
+            Task {
+                _ = try? await staleSession.finish()
+            }
+        }
+    }
+
+    private func cancelStreamingSession(for generation: Int) {
+        guard recordingGeneration == generation else { return }
+
+        recordingGeneration += 1
+        sessionCreationTask?.cancel()
+        sessionCreationTask = nil
+        bufferStreamContinuation?.finish()
+        bufferStreamContinuation = nil
+        bufferFeederTask?.cancel()
+        bufferFeederTask = nil
+
+        if let session = activeSession {
+            activeSession = nil
+            Task {
+                _ = try? await session.finish()
+            }
+        } else {
+            activeSession = nil
         }
     }
     
