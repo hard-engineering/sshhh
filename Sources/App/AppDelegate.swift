@@ -189,27 +189,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             do {
                 let terms = dictionaryStore.buildVocabularyTerms()
                 let session = try await transcriptionEngine?.createSession(terms: terms)
-                activeSession = session
 
-                // Signal that session is ready (for stopRecordingAndTranscribe to await)
-                sessionReady?.resume(returning: session)
-                sessionReady = nil
-
-                guard let session = session else { return }
-
-                // Flush audio captured while session was being created
-                if let recorder = audioRecorder {
-                    for buffer in recorder.flushPendingBuffers() {
-                        await session.streamAudio(buffer)
-                    }
+                guard let session = session else {
+                    activeSession = nil
+                    sessionReady?.resume(returning: nil)
+                    sessionReady = nil
+                    return
                 }
 
-                // Single feeder task: reads from ordered stream, calls streamAudio sequentially
+                // Create feeder task BEFORE signalling ready — stopRecordingAndTranscribe
+                // reads bufferFeederTask after seeing activeSession/sessionReady, so
+                // the task must already be set to avoid a nil-await race.
                 bufferFeederTask = Task {
+                    // First flush audio captured while session was being created
+                    if let recorder = audioRecorder {
+                        for buffer in recorder.flushPendingBuffers() {
+                            await session.streamAudio(buffer)
+                        }
+                    }
+                    // Then drain live audio from the ordered stream
                     for await buffer in bufferStream {
                         await session.streamAudio(buffer)
                     }
                 }
+
+                // Now signal ready — stopRecordingAndTranscribe can safely await bufferFeederTask
+                activeSession = session
+                sessionReady?.resume(returning: session)
+                sessionReady = nil
             } catch {
                 print("❌ Failed to start streaming session: \(error)")
                 sessionReady?.resume(returning: nil)
@@ -240,14 +247,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.playSound(.stopRecording)
         }
 
-        // Stop mic capture and check audio level
-        let peakRMS = audioRecorder?.peakRMS ?? 0
+        // Stop mic capture and check duration
+        let duration = -(audioRecorder?.recordingStartTime?.timeIntervalSinceNow ?? 0)
         audioRecorder?.stopRecording()
-        diag("Audio peakRMS: \(peakRMS), threshold: \(AudioRecorder.silenceThreshold)")
+        diag("Recording duration: \(String(format: "%.2f", duration))s, minimum: \(AudioRecorder.minimumDuration)s")
 
-        // Skip transcription entirely if audio was silent
-        if peakRMS < AudioRecorder.silenceThreshold {
-            diag("Silent recording detected, skipping transcription")
+        // Skip transcription if recording was too short to contain speech
+        if duration < AudioRecorder.minimumDuration {
+            diag("Recording too short, skipping transcription")
             bufferStreamContinuation?.finish()
             bufferStreamContinuation = nil
             bufferFeederTask?.cancel()
