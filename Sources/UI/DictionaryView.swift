@@ -39,6 +39,13 @@ struct DictionaryView: View {
                         .padding(.bottom, 8)
                     }
 
+                    if let warning = store.vocabularyBoostingWarning {
+                        DictionaryWarningBanner(message: warning)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 12)
+                            .padding(.bottom, 4)
+                    }
+
                     if store.entries.isEmpty {
                         VStack(spacing: 8) {
                             Image(systemName: "book")
@@ -73,6 +80,24 @@ struct DictionaryView: View {
         .sheet(isPresented: $showAddSheet) {
             AddDictionaryEntrySheet(store: store)
         }
+    }
+}
+
+private struct DictionaryWarningBanner: View {
+    let message: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
+        }
+        .padding(10)
+        .background(Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
     }
 }
 

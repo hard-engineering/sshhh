@@ -337,18 +337,13 @@ class PermissionsWindowController: NSWindowController, NSWindowDelegate {
         window.titlebarAppearsTransparent = true
         window.center()
 
-        let view = PermissionsView(viewModel: PermissionsViewModel())
-        window.contentView = NSHostingView(rootView: view)
-
         super.init(window: window)
         window.delegate = self
 
-        // Use the same viewModel instance
         let sharedViewModel = self.viewModel
         window.contentView = NSHostingView(rootView: PermissionsView(viewModel: sharedViewModel))
 
-        // Observe when all permissions are granted — start services immediately
-        // but let user close the window themselves
+        // Notify the app once all permissions are granted.
         cancellable = sharedViewModel.$micStatus.combineLatest(sharedViewModel.$accessibilityStatus)
             .receive(on: RunLoop.main)
             .sink { [weak self] mic, ax in

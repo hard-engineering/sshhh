@@ -68,7 +68,11 @@ class AudioRecorder: AudioRecording {
         }
 
         // Create converter
-        converter = AVAudioConverter(from: inputFormat, to: outputFormat)
+        guard let newConverter = AVAudioConverter(from: inputFormat, to: outputFormat) else {
+            print("❌ Failed to create audio converter")
+            return
+        }
+        converter = newConverter
 
         // Install tap on input node
         inputNode.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] buffer, time in
@@ -80,6 +84,9 @@ class AudioRecorder: AudioRecording {
             isRecording = true
             print("🎤 Recording started")
         } catch {
+            inputNode.removeTap(onBus: 0)
+            converter = nil
+            onBuffer = nil
             print("❌ Failed to start audio engine: \(error)")
         }
     }
@@ -90,6 +97,7 @@ class AudioRecorder: AudioRecording {
         audioEngine.inputNode.removeTap(onBus: 0)
         audioEngine.stop()
         isRecording = false
+        converter = nil
         onBuffer = nil
 
         print("🎤 Recording stopped")

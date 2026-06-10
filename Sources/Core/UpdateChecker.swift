@@ -2,6 +2,8 @@ import Foundation
 
 class UpdateChecker: ObservableObject {
 
+    static let automaticCheckKey = "checkForUpdatesAutomatically"
+
     @Published var availableVersion: String?
 
     private let owner = "hard-engineering"
@@ -12,7 +14,18 @@ class UpdateChecker: ObservableObject {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
     }
 
+    var automaticChecksEnabled: Bool {
+        UserDefaults.standard.object(forKey: Self.automaticCheckKey) as? Bool ?? true
+    }
+
     func checkOnce() {
+        guard automaticChecksEnabled else {
+            DispatchQueue.main.async {
+                self.availableVersion = nil
+            }
+            return
+        }
+
         guard !hasChecked else { return }
         hasChecked = true
 
@@ -35,6 +48,11 @@ class UpdateChecker: ObservableObject {
                 }
             }
         }.resume()
+    }
+
+    func resetAndCheck() {
+        hasChecked = false
+        checkOnce()
     }
 
     /// Compare only major.minor.patch (first 3 numeric components).

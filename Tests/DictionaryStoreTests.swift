@@ -164,6 +164,29 @@ struct DictionaryStoreTests {
         #expect(result == "hello world")
     }
 
+    @Test("applyReplacements does not replace inside another word")
+    func applyReplacements_wordBoundary() {
+        let (store, url) = makeStore()
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        store.addEntry(phrase: "Application Programming Interface", spokenForm: "api")
+
+        let result = store.applyReplacements(to: "api capillary")
+        #expect(result == "Application Programming Interface capillary")
+    }
+
+    @Test("applyReplacements prefers longer spoken forms first")
+    func applyReplacements_longestFirst() {
+        let (store, url) = makeStore()
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        store.addEntry(phrase: "Kubernetes", spokenForm: "kube")
+        store.addEntry(phrase: "Kubernetes service", spokenForm: "kube service")
+
+        let result = store.applyReplacements(to: "restart kube service")
+        #expect(result == "restart Kubernetes service")
+    }
+
     // MARK: - Helpers
 
     private func makeUpdatedEntry(

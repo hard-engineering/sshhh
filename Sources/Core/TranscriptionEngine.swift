@@ -7,6 +7,7 @@ class TranscriptionEngine {
     private var models: AsrModels?
     private var ctcModels: CtcModels?
     private(set) var isReady = false
+    private(set) var lastVocabularyBoostingError: Error?
 
     init() {}
 
@@ -28,6 +29,7 @@ class TranscriptionEngine {
         }
 
         let manager = SlidingWindowAsrManager(config: .streaming)
+        lastVocabularyBoostingError = nil
 
         // Configure vocabulary boosting before start (required ordering)
         if !terms.isEmpty {
@@ -45,6 +47,7 @@ class TranscriptionEngine {
                 )
                 diag("  Vocabulary boosting configured with \(terms.count) term(s)")
             } catch {
+                lastVocabularyBoostingError = error
                 diag("  Vocabulary boosting failed: \(error)")
             }
         }

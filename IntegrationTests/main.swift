@@ -25,6 +25,8 @@ class IntegrationTestRunner {
         print("\n" + String(repeating: "=", count: 60))
         print("🧪 sshhh Integration Test Suite")
         print(String(repeating: "=", count: 60))
+        configureDiagnosticLogPreference()
+        defer { clearDiagnosticLogPreference() }
 
         // Check accessibility permissions first
         guard checkAccessibilityPermissions() else {
@@ -286,6 +288,22 @@ class IntegrationTestRunner {
     }
 
     // MARK: - Log Monitoring
+
+    func configureDiagnosticLogPreference() {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+        process.arguments = ["write", "com.sshhh.app", "DiagnosticLogPath", diagLogPath]
+        try? process.run()
+        process.waitUntilExit()
+    }
+
+    func clearDiagnosticLogPreference() {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+        process.arguments = ["delete", "com.sshhh.app", "DiagnosticLogPath"]
+        try? process.run()
+        process.waitUntilExit()
+    }
 
     private var lastLogLineCount = 0
 

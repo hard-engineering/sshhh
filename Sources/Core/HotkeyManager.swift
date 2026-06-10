@@ -36,6 +36,10 @@ class HotkeyManager {
     }
     
     func start() {
+        guard eventTap == nil else {
+            return
+        }
+
         // Check accessibility permissions
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         guard AXIsProcessTrustedWithOptions(options) else {
@@ -62,6 +66,12 @@ class HotkeyManager {
                 }
                 
                 let manager = Unmanaged<HotkeyManager>.fromOpaque(refcon).takeUnretainedValue()
+
+                if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                    manager.reenableEventTap()
+                    return Unmanaged.passRetained(event)
+                }
+
                 manager.handleEvent(event)
                 
                 return Unmanaged.passRetained(event)
@@ -84,6 +94,12 @@ class HotkeyManager {
     }
     
     func stop() {
+        activationWorkItem?.cancel()
+        activationWorkItem = nil
+        isOptionPressed = false
+        isShortcutCombo = false
+        recordingActivated = false
+
         if let eventTap = eventTap {
             CGEvent.tapEnable(tap: eventTap, enable: false)
         }
@@ -94,6 +110,14 @@ class HotkeyManager {
         
         eventTap = nil
         runLoopSource = nil
+    }
+
+    private func reenableEventTap() {
+        guard let eventTap else {
+            return
+        }
+
+        CGEvent.tapEnable(tap: eventTap, enable: true)
     }
     
     private func handleEvent(_ event: CGEvent) {

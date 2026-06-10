@@ -69,8 +69,17 @@ if [ -f "SpeakingIcon.png" ]; then
     cp "SpeakingIcon.png" "$RESOURCES_DIR/"
 fi
 
-SIGNING_IDENTITY="${CODESIGN_IDENTITY:--}"
+if [ -z "${CODESIGN_IDENTITY:-}" ]; then
+    echo "❌ CODESIGN_IDENTITY is required. Use: CODESIGN_IDENTITY=\"sshhh Dev\" bash bundler.sh" >&2
+    exit 64
+fi
+
+SIGNING_IDENTITY="$CODESIGN_IDENTITY"
 if [ "$SIGNING_IDENTITY" = "-" ]; then
+    if [ "${ALLOW_ADHOC_SIGNING:-0}" != "1" ]; then
+        echo "❌ Ad-hoc signing resets macOS permissions. Set ALLOW_ADHOC_SIGNING=1 to override." >&2
+        exit 64
+    fi
     echo "📝 Signing app (ad-hoc)..."
 else
     echo "📝 Signing app with identity: $SIGNING_IDENTITY"

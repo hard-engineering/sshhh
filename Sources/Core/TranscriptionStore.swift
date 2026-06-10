@@ -2,11 +2,14 @@ import Foundation
 
 class TranscriptionStore: ObservableObject {
 
+    static let defaultMaxEntries = 500
+
     @Published private(set) var entries: [TranscriptionEntry] = []
 
     private let fileURL: URL
+    private let maxEntries: Int
 
-    init() {
+    init(maxEntries: Int = defaultMaxEntries) {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let appDir = appSupport.appendingPathComponent("com.sshhh.app", isDirectory: true)
 
@@ -14,6 +17,13 @@ class TranscriptionStore: ObservableObject {
         try? FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)
 
         self.fileURL = appDir.appendingPathComponent("transcription_history.json")
+        self.maxEntries = maxEntries
+        load()
+    }
+
+    init(fileURL: URL, maxEntries: Int = defaultMaxEntries) {
+        self.fileURL = fileURL
+        self.maxEntries = maxEntries
         load()
     }
 
@@ -22,6 +32,7 @@ class TranscriptionStore: ObservableObject {
     func addEntry(text: String, isSilent: Bool) {
         let entry = TranscriptionEntry(text: text, isSilent: isSilent)
         entries.insert(entry, at: 0) // newest first
+        trimToRetentionLimit()
         save()
     }
 
@@ -44,9 +55,21 @@ class TranscriptionStore: ObservableObject {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             entries = try decoder.decode([TranscriptionEntry].self, from: data)
+            let originalCount = entries.count
+            trimToRetentionLimit()
+            if entries.count != originalCount {
+                save()
+            }
         } catch {
             print("⚠️ Failed to load transcription history: \(error)")
         }
+    }
+
+    private func trimToRetentionLimit() {
+        guard entries.count > maxEntries else {
+            return
+        }
+        entries.removeSubrange(maxEntries..<entries.count)
     }
 
     private func save() {

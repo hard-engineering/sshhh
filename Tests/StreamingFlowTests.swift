@@ -69,7 +69,7 @@ struct StreamingFlowTests {
     @Test("transcriptionProvider is invoked on stop and result flows to textInserter")
     func transcriptionProvider_ResultFlows() async throws {
         var providerCalled = false
-        let (controller, mocks) = createTestController()
+        let (controller, mocks) = createTestController(activationDelay: 0)
 
         controller.transcriptionProvider = {
             providerCalled = true
@@ -77,24 +77,24 @@ struct StreamingFlowTests {
         }
 
         controller.onKeyDown()
-        try await Task.sleep(nanoseconds: 200_000_000)
+        #expect(await waitUntil { controller.isRecording })
         controller.onKeyUp()
-        try await Task.sleep(nanoseconds: 500_000_000)
 
-        #expect(providerCalled == true, "transcriptionProvider should be called")
+        #expect(await waitUntil { providerCalled }, "transcriptionProvider should be called")
+        #expect(await waitUntil { mocks.textInserter.lastInsertedText == "streaming result" })
         #expect(mocks.textInserter.lastInsertedText == "streaming result",
                 "Result should flow to textInserter")
     }
 
     @Test("transcriptionProvider returning nil does not insert text")
     func transcriptionProvider_NilResult() async throws {
-        let (controller, mocks) = createTestController(transcriptionResult: nil)
+        let (controller, mocks) = createTestController(transcriptionResult: nil, activationDelay: 0)
 
         controller.onKeyDown()
-        try await Task.sleep(nanoseconds: 200_000_000)
+        #expect(await waitUntil { controller.isRecording })
         controller.onKeyUp()
-        try await Task.sleep(nanoseconds: 500_000_000)
 
+        #expect(await waitUntil { controller.isProcessing == false })
         #expect(mocks.textInserter.insertTextCallCount == 0,
                 "No text should be inserted for nil result")
         #expect(controller.isProcessing == false, "Should reset to idle")
@@ -102,13 +102,13 @@ struct StreamingFlowTests {
 
     @Test("transcriptionProvider returning empty string does not insert text")
     func transcriptionProvider_EmptyResult() async throws {
-        let (controller, mocks) = createTestController(transcriptionResult: "")
+        let (controller, mocks) = createTestController(transcriptionResult: "", activationDelay: 0)
 
         controller.onKeyDown()
-        try await Task.sleep(nanoseconds: 200_000_000)
+        #expect(await waitUntil { controller.isRecording })
         controller.onKeyUp()
-        try await Task.sleep(nanoseconds: 500_000_000)
 
+        #expect(await waitUntil { controller.isProcessing == false })
         #expect(mocks.textInserter.insertTextCallCount == 0,
                 "No text should be inserted for empty result")
         #expect(controller.isProcessing == false, "Should reset to idle")
@@ -116,17 +116,17 @@ struct StreamingFlowTests {
 
     @Test("transcriptionProvider error resets state without inserting text")
     func transcriptionProvider_Error() async throws {
-        let (controller, mocks) = createTestController()
+        let (controller, mocks) = createTestController(activationDelay: 0)
 
         controller.transcriptionProvider = {
             throw NSError(domain: "test", code: 1)
         }
 
         controller.onKeyDown()
-        try await Task.sleep(nanoseconds: 200_000_000)
+        #expect(await waitUntil { controller.isRecording })
         controller.onKeyUp()
-        try await Task.sleep(nanoseconds: 500_000_000)
 
+        #expect(await waitUntil { controller.isProcessing == false })
         #expect(mocks.textInserter.insertTextCallCount == 0)
         #expect(controller.isRecording == false)
         #expect(controller.isProcessing == false)
@@ -156,7 +156,8 @@ struct StreamingFlowTests {
 
     func createTestController(
         transcriptionResult: String? = nil,
-        transcriptionError: Error? = nil
+        transcriptionError: Error? = nil,
+        activationDelay: TimeInterval = 0.15
     ) -> (TestableRecordingController, TestMocks) {
         let audioRecorder = MockAudioRecorder()
         let transcriber = MockTranscriptionEngine()
@@ -167,7 +168,8 @@ struct StreamingFlowTests {
             audioRecorder: audioRecorder,
             transcriber: transcriber,
             textInserter: textInserter,
-            widget: widget
+            widget: widget,
+            activationDelay: activationDelay
         )
 
         controller.transcriptionProvider = {

@@ -29,6 +29,7 @@ Open the settings window from the menubar icon. Add words and phrases to the Dic
 
 - **Engine**: [FluidAudio](https://github.com/FluidInference/FluidAudio) + NVIDIA Parakeet TDT, running on the Apple Neural Engine at up to 190x real-time
 - **Privacy**: All transcription happens locally. No audio leaves your device.
+- **Updates**: sshhh can check GitHub release metadata for newer versions; this can be disabled in the app.
 - **Hotkey**: Global Option key monitoring via `CGEvent` tap
 - **Text insertion**: Clipboard paste simulation (Cmd+V) — fast and compatible with all apps
 - **UI**: Menubar-only (`LSUIElement`), floating widget shows recording/processing state

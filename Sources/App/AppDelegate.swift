@@ -3,20 +3,7 @@ import SwiftUI
 import AVFoundation
 import FluidAudio
 
-private let diagLog: FileHandle = {
-    let path = "/tmp/sshhh_diag.log"
-    FileManager.default.createFile(atPath: path, contents: Data())
-    let handle = FileHandle(forWritingAtPath: path)!
-    handle.truncateFile(atOffset: 0)
-    return handle
-}()
-
-func diag(_ msg: String) {
-    let line = "[DIAG \(Date())] \(msg)\n"
-    diagLog.seekToEndOfFile()
-    diagLog.write(line.data(using: .utf8)!)
-}
-
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     
     // MARK: - Properties
@@ -69,18 +56,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Menubar
         menubarController = MenubarController(
-            onOpenApp: { [weak self] in self?.showMainWindow() },
-            onShowHistory: { [weak self] in self?.showMainWindow(tab: .history) },
+            onOpenApp: { [weak self] in
+                Task { @MainActor in self?.showMainWindow() }
+            },
+            onShowHistory: { [weak self] in
+                Task { @MainActor in self?.showMainWindow(tab: .history) }
+            },
             onQuit: { NSApp.terminate(nil) }
         )
         
         // Hotkey manager (initialized but not started)
         hotkeyManager = HotkeyManager(
             onKeyDown: { [weak self] in
-                self?.startRecording()
+                Task { @MainActor in self?.startRecording() }
             },
             onKeyUp: { [weak self] in
-                self?.stopRecordingAndTranscribe()
+                Task { @MainActor in self?.stopRecordingAndTranscribe() }
             }
         )
     }
@@ -133,11 +124,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func showPermissionsWindow() {
         permissionsWindowController = PermissionsWindowController()
         permissionsWindowController?.onAllGranted = { [weak self] in
-            self?.hasCompletedOnboarding = true
-            self?.permissionsWindowController?.window?.close()
-            self?.permissionsWindowController = nil
-            self?.startServices()
-            self?.showMainWindow()
+            Task { @MainActor in
+                self?.hasCompletedOnboarding = true
+                self?.permissionsWindowController?.window?.close()
+                self?.permissionsWindowController = nil
+                self?.startServices()
+                self?.showMainWindow()
+            }
         }
         permissionsWindowController?.showWindow(nil)
     }
@@ -195,6 +188,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             do {
                 let terms = self.dictionaryStore.buildVocabularyTerms()
                 let session = try await self.transcriptionEngine?.createSession(terms: terms)
+                if self.transcriptionEngine?.lastVocabularyBoostingError != nil {
+                    self.dictionaryStore.setVocabularyBoostingWarning(
+                        "Dictionary boosting is unavailable for this session. Text replacement still works."
+                    )
+                } else {
+                    self.dictionaryStore.setVocabularyBoostingWarning(nil)
+                }
 
                 guard let session = session else {
                     if self.recordingGeneration == generation {
@@ -212,9 +212,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
                 // Create feeder task before publishing activeSession, so stop can
                 // always await the feeder after observing a ready session.
-                self.bufferFeederTask = Task { [weak self] in
+                let recorder = self.audioRecorder
+                self.bufferFeederTask = Task.detached {
                     // First flush audio captured while session was being created
-                    if let recorder = self?.audioRecorder {
+                    if let recorder {
                         for buffer in recorder.flushPendingBuffers() {
                             guard !Task.isCancelled else { return }
                             await session.streamAudio(buffer)
@@ -383,10 +384,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Insert text if we got a result
         if let text = text, !text.isEmpty {
-            diag("ASR raw result: \"\(text)\"")
+            diag("ASR result received: characters=\(text.count)")
             let finalText = dictionaryStore.applyReplacements(to: text)
             if finalText != text {
-                diag("applyReplacements changed text to: \"\(finalText)\"")
+                diag("applyReplacements changed transcription")
             } else {
                 diag("applyReplacements: no changes applied")
             }
@@ -396,10 +397,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             hotkeyManager?.stop() // CRITICAL: Stop listening to prevent feedback loop
 
             textInserter?.insertText(finalText) { [weak self] in
-                print("✅ Text insertion complete. Resuming hotkey manager.")
-                self?.hotkeyManager?.start()
-                self?.isProcessing = false
-                self?.lastProcessingTime = Date()
+                Task { @MainActor in
+                    print("✅ Text insertion complete. Resuming hotkey manager.")
+                    self?.hotkeyManager?.start()
+                    self?.isProcessing = false
+                    self?.lastProcessingTime = Date()
+                }
             }
         } else {
             transcriptionStore.addEntry(text: "", isSilent: true)

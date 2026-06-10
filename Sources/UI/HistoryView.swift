@@ -55,6 +55,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 struct SidebarView: View {
     @Binding var selection: SidebarItem?
     @ObservedObject var updateChecker: UpdateChecker
+    @AppStorage(UpdateChecker.automaticCheckKey) private var updateChecksEnabled = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -64,8 +65,8 @@ struct SidebarView: View {
             }
             .listStyle(.sidebar)
 
-            if let version = updateChecker.availableVersion {
-                VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 8) {
+                if let version = updateChecker.availableVersion {
                     HStack(spacing: 5) {
                         Image(systemName: "arrow.down.circle.fill")
                             .foregroundStyle(.blue)
@@ -117,18 +118,32 @@ struct SidebarView: View {
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }
-                .font(.caption)
-                .padding(10)
-                .background(Color(nsColor: .windowBackgroundColor).opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
-                )
-                .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 10)
-                .frame(maxWidth: .infinity)
-                .background(VisualEffectBackground(material: .sidebar))
+
+                Toggle("Check for updates", isOn: $updateChecksEnabled)
+                    .toggleStyle(.checkbox)
+
+                Text("Contacts GitHub for release metadata.")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            .font(.caption)
+            .padding(10)
+            .background(Color(nsColor: .windowBackgroundColor).opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+            )
+            .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .background(VisualEffectBackground(material: .sidebar))
+            .onChange(of: updateChecksEnabled) { _, enabled in
+                if enabled {
+                    updateChecker.resetAndCheck()
+                } else {
+                    updateChecker.availableVersion = nil
+                }
             }
         }
     }

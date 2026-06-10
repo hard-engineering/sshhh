@@ -4,6 +4,7 @@ import FluidAudio
 class DictionaryStore: ObservableObject {
 
     @Published private(set) var entries: [DictionaryEntry] = []
+    @Published private(set) var vocabularyBoostingWarning: String?
 
     private let fileURL: URL
 
@@ -43,6 +44,10 @@ class DictionaryStore: ObservableObject {
         save()
     }
 
+    func setVocabularyBoostingWarning(_ warning: String?) {
+        vocabularyBoostingWarning = warning
+    }
+
     // MARK: - Vocabulary Boosting
 
     func buildVocabularyTerms() -> [CustomVocabularyTerm] {
@@ -60,15 +65,36 @@ class DictionaryStore: ObservableObject {
 
     func applyReplacements(to text: String) -> String {
         var result = text
-        for entry in entries {
+        let replacementEntries = entries
+            .filter { $0.hasReplacement && $0.spokenForm?.isEmpty == false }
+            .sorted { ($0.spokenForm ?? "").count > ($1.spokenForm ?? "").count }
+
+        for entry in replacementEntries {
             guard let spoken = entry.spokenForm, entry.hasReplacement else { continue }
-            result = result.replacingOccurrences(
-                of: spoken,
-                with: entry.phrase,
-                options: .caseInsensitive
+            let pattern = replacementPattern(for: spoken)
+            guard let regex = try? NSRegularExpression(
+                pattern: pattern,
+                options: [.caseInsensitive]
+            ) else {
+                continue
+            }
+
+            let range = NSRange(result.startIndex..<result.endIndex, in: result)
+            result = regex.stringByReplacingMatches(
+                in: result,
+                options: [],
+                range: range,
+                withTemplate: NSRegularExpression.escapedTemplate(for: entry.phrase)
             )
         }
         return result
+    }
+
+    private func replacementPattern(for spoken: String) -> String {
+        let escaped = NSRegularExpression.escapedPattern(for: spoken)
+        let startBoundary = spoken.first?.needsWordBoundary == true ? "\\b" : ""
+        let endBoundary = spoken.last?.needsWordBoundary == true ? "\\b" : ""
+        return startBoundary + escaped + endBoundary
     }
 
     // MARK: - Persistence
@@ -95,5 +121,11 @@ class DictionaryStore: ObservableObject {
         } catch {
             print("⚠️ Failed to save dictionary: \(error)")
         }
+    }
+}
+
+private extension Character {
+    var needsWordBoundary: Bool {
+        isLetter || isNumber || self == "_"
     }
 }
