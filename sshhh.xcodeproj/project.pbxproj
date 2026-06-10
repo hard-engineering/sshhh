@@ -1,0 +1,561 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		101000000000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000001 /* AppDelegate.swift */; };
+		101000000000000000000002 /* SshhApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000002 /* SshhApp.swift */; };
+		101000000000000000000003 /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000003 /* AudioRecorder.swift */; };
+		101000000000000000000004 /* DictionaryEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000004 /* DictionaryEntry.swift */; };
+		101000000000000000000005 /* DictionaryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000005 /* DictionaryStore.swift */; };
+		101000000000000000000006 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000006 /* HotkeyManager.swift */; };
+		101000000000000000000007 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000007 /* Protocols.swift */; };
+		101000000000000000000008 /* TestableRecordingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000008 /* TestableRecordingController.swift */; };
+		101000000000000000000009 /* TextInserter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000009 /* TextInserter.swift */; };
+		10100000000000000000000A /* TranscriptionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10200000000000000000000A /* TranscriptionEngine.swift */; };
+		10100000000000000000000B /* TranscriptionEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10200000000000000000000B /* TranscriptionEntry.swift */; };
+		10100000000000000000000C /* TranscriptionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10200000000000000000000C /* TranscriptionStore.swift */; };
+		10100000000000000000000D /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10200000000000000000000D /* UpdateChecker.swift */; };
+		10100000000000000000000E /* DictionaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10200000000000000000000E /* DictionaryView.swift */; };
+		10100000000000000000000F /* FloatingWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10200000000000000000000F /* FloatingWidget.swift */; };
+		101000000000000000000010 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000010 /* HistoryView.swift */; };
+		101000000000000000000011 /* MainWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000011 /* MainWindowController.swift */; };
+		101000000000000000000012 /* MenubarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000012 /* MenubarController.swift */; };
+		101000000000000000000013 /* PermissionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000013 /* PermissionsView.swift */; };
+		101000000000000000000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000014 /* Assets.xcassets */; };
+		101000000000000000000015 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000015 /* PrivacyInfo.xcprivacy */; };
+		101000000000000000000016 /* SpeakingIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 102000000000000000000016 /* SpeakingIcon.png */; };
+		101000000000000000000017 /* FluidAudio in Frameworks */ = {isa = PBXBuildFile; productRef = 10D000000000000000000001 /* FluidAudio */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		102000000000000000000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		102000000000000000000002 /* SshhApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SshhApp.swift; sourceTree = "<group>"; };
+		102000000000000000000003 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
+		102000000000000000000004 /* DictionaryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryEntry.swift; sourceTree = "<group>"; };
+		102000000000000000000005 /* DictionaryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryStore.swift; sourceTree = "<group>"; };
+		102000000000000000000006 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
+		102000000000000000000007 /* Protocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
+		102000000000000000000008 /* TestableRecordingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestableRecordingController.swift; sourceTree = "<group>"; };
+		102000000000000000000009 /* TextInserter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInserter.swift; sourceTree = "<group>"; };
+		10200000000000000000000A /* TranscriptionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionEngine.swift; sourceTree = "<group>"; };
+		10200000000000000000000B /* TranscriptionEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionEntry.swift; sourceTree = "<group>"; };
+		10200000000000000000000C /* TranscriptionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionStore.swift; sourceTree = "<group>"; };
+		10200000000000000000000D /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
+		10200000000000000000000E /* DictionaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryView.swift; sourceTree = "<group>"; };
+		10200000000000000000000F /* FloatingWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingWidget.swift; sourceTree = "<group>"; };
+		102000000000000000000010 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		102000000000000000000011 /* MainWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowController.swift; sourceTree = "<group>"; };
+		102000000000000000000012 /* MenubarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenubarController.swift; sourceTree = "<group>"; };
+		102000000000000000000013 /* PermissionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsView.swift; sourceTree = "<group>"; };
+		102000000000000000000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		102000000000000000000015 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		102000000000000000000016 /* SpeakingIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ../../SpeakingIcon.png; sourceTree = "<group>"; };
+		102000000000000000000017 /* AppStore.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppStore.entitlements; sourceTree = "<group>"; };
+		102000000000000000000018 /* WisprFlow.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WisprFlow.entitlements; sourceTree = "<group>"; };
+		102000000000000000000019 /* sshhh.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sshhh.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		103000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				101000000000000000000017 /* FluidAudio in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		104000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				104000000000000000000002 /* Sources */,
+				104000000000000000000006 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		104000000000000000000002 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				104000000000000000000003 /* App */,
+				104000000000000000000004 /* Core */,
+				104000000000000000000005 /* UI */,
+				104000000000000000000007 /* Resources */,
+				102000000000000000000017 /* AppStore.entitlements */,
+				102000000000000000000018 /* WisprFlow.entitlements */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		104000000000000000000003 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				102000000000000000000001 /* AppDelegate.swift */,
+				102000000000000000000002 /* SshhApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		104000000000000000000004 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				102000000000000000000003 /* AudioRecorder.swift */,
+				102000000000000000000004 /* DictionaryEntry.swift */,
+				102000000000000000000005 /* DictionaryStore.swift */,
+				102000000000000000000006 /* HotkeyManager.swift */,
+				102000000000000000000007 /* Protocols.swift */,
+				102000000000000000000008 /* TestableRecordingController.swift */,
+				102000000000000000000009 /* TextInserter.swift */,
+				10200000000000000000000A /* TranscriptionEngine.swift */,
+				10200000000000000000000B /* TranscriptionEntry.swift */,
+				10200000000000000000000C /* TranscriptionStore.swift */,
+				10200000000000000000000D /* UpdateChecker.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		104000000000000000000005 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				10200000000000000000000E /* DictionaryView.swift */,
+				10200000000000000000000F /* FloatingWidget.swift */,
+				102000000000000000000010 /* HistoryView.swift */,
+				102000000000000000000011 /* MainWindowController.swift */,
+				102000000000000000000012 /* MenubarController.swift */,
+				102000000000000000000013 /* PermissionsView.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		104000000000000000000006 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				102000000000000000000019 /* sshhh.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		104000000000000000000007 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				102000000000000000000014 /* Assets.xcassets */,
+				102000000000000000000015 /* PrivacyInfo.xcprivacy */,
+				102000000000000000000016 /* SpeakingIcon.png */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		105000000000000000000001 /* sshhh */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 109000000000000000000002 /* Build configuration list for PBXNativeTarget "sshhh" */;
+			buildPhases = (
+				106000000000000000000001 /* Sources */,
+				103000000000000000000001 /* Frameworks */,
+				107000000000000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = sshhh;
+			packageProductDependencies = (
+				10D000000000000000000001 /* FluidAudio */,
+			);
+			productName = sshhh;
+			productReference = 102000000000000000000019 /* sshhh.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		108000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2650;
+				TargetAttributes = {
+					105000000000000000000001 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+				};
+			};
+			buildConfigurationList = 109000000000000000000001 /* Build configuration list for PBXProject "sshhh" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 104000000000000000000001;
+			packageReferences = (
+				10C000000000000000000001 /* XCRemoteSwiftPackageReference "FluidAudio" */,
+			);
+			productRefGroup = 104000000000000000000006 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				105000000000000000000001 /* sshhh */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		107000000000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				101000000000000000000014 /* Assets.xcassets in Resources */,
+				101000000000000000000015 /* PrivacyInfo.xcprivacy in Resources */,
+				101000000000000000000016 /* SpeakingIcon.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		106000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				101000000000000000000001 /* AppDelegate.swift in Sources */,
+				101000000000000000000002 /* SshhApp.swift in Sources */,
+				101000000000000000000003 /* AudioRecorder.swift in Sources */,
+				101000000000000000000004 /* DictionaryEntry.swift in Sources */,
+				101000000000000000000005 /* DictionaryStore.swift in Sources */,
+				101000000000000000000006 /* HotkeyManager.swift in Sources */,
+				101000000000000000000007 /* Protocols.swift in Sources */,
+				101000000000000000000008 /* TestableRecordingController.swift in Sources */,
+				101000000000000000000009 /* TextInserter.swift in Sources */,
+				10100000000000000000000A /* TranscriptionEngine.swift in Sources */,
+				10100000000000000000000B /* TranscriptionEntry.swift in Sources */,
+				10100000000000000000000C /* TranscriptionStore.swift in Sources */,
+				10100000000000000000000D /* UpdateChecker.swift in Sources */,
+				10100000000000000000000E /* DictionaryView.swift in Sources */,
+				10100000000000000000000F /* FloatingWidget.swift in Sources */,
+				101000000000000000000010 /* HistoryView.swift in Sources */,
+				101000000000000000000011 /* MainWindowController.swift in Sources */,
+				101000000000000000000012 /* MenubarController.swift in Sources */,
+				101000000000000000000013 /* PermissionsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		10A000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		10A000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		10A000000000000000000003 /* AppStore */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = AppStore;
+		};
+		10B000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = sshhh;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHighResolutionCapable = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "sshhh needs microphone access to record your speech for transcription.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2026 sshhh. All rights reserved.";
+				INFOPLIST_KEY_NSSupportsAutomaticGraphicsSwitching = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sshhh.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		10B000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = sshhh;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHighResolutionCapable = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "sshhh needs microphone access to record your speech for transcription.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2026 sshhh. All rights reserved.";
+				INFOPLIST_KEY_NSSupportsAutomaticGraphicsSwitching = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sshhh.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		10B000000000000000000003 /* AppStore */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/AppStore.entitlements;
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = sshhh;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHighResolutionCapable = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "sshhh needs microphone access to record your speech for transcription.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2026 sshhh. All rights reserved.";
+				INFOPLIST_KEY_NSSupportsAutomaticGraphicsSwitching = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sshhh.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = AppStore;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		109000000000000000000001 /* Build configuration list for PBXProject "sshhh" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				10A000000000000000000001 /* Debug */,
+				10A000000000000000000002 /* Release */,
+				10A000000000000000000003 /* AppStore */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		109000000000000000000002 /* Build configuration list for PBXNativeTarget "sshhh" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				10B000000000000000000001 /* Debug */,
+				10B000000000000000000002 /* Release */,
+				10B000000000000000000003 /* AppStore */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		10C000000000000000000001 /* XCRemoteSwiftPackageReference "FluidAudio" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/FluidInference/FluidAudio.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.13.6;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		10D000000000000000000001 /* FluidAudio */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10C000000000000000000001 /* XCRemoteSwiftPackageReference "FluidAudio" */;
+			productName = FluidAudio;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 108000000000000000000001 /* Project object */;
+}

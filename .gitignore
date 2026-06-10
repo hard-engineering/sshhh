@@ -3,5 +3,7 @@ sshhh.app/
 sshhh.dmg
 sshhh.iconset/
 *.xcodeproj/
+!sshhh.xcodeproj/
+!sshhh.xcodeproj/**
 DerivedData/
 .DS_Store
